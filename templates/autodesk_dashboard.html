@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selections Summary – Management</title>
+<style>
+    body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f5f5f5; }
+    h1 { text-align:center; color:#333; margin-bottom:20px; }
+    .filters {
+        background:#fff; padding:20px; border-radius:5px; box-shadow:0 2px 5px rgba(0,0,0,.1);
+        display:grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap:30px; margin-bottom:20px;
+    }
+    .group { display:flex; flex-direction:column; gap:6px; }
+    .group label { font-weight:bold; font-size:14px; }
+    .filters input, .filters select { padding:8px; border:1px solid #ddd; border-radius:4px; font-size:14px; width:100%; }
+    select[multiple]{ min-height:100px; }
+    .actions { grid-column:1 / -1; display:flex; gap:10px; justify-content:flex-end; }
+    .btn { background:#1976d2; color:#fff; border:none; padding:10px 16px; border-radius:4px; cursor:pointer; font-size:14px; }
+    .btn:hover { background:#1565c0; }
+    .btn-secondary { background:#4CAF50; }
+    .btn-secondary:hover { background:#45a049; }
+    table { width:100%; border-collapse:collapse; background:#fff; box-shadow:0 2px 5px rgba(0,0,0,.1); }
+    th, td { padding:12px 15px; border-bottom:1px solid #ddd; text-align:left; }
+    th { background:#f2f2f2; position:sticky; top:0; }
+    .count { font-weight:bold; }
+    .link { color:#0066cc; text-decoration:none; }
+    .link:hover { text-decoration:underline; }
+    .pagination { display:flex; justify-content:center; gap:6px; margin:15px 0; }
+    .pagination button, .pagination select { padding:6px 10px; }
+    .summary { text-align:center; margin-top:10px; color:#666; }
+    .tag { display:inline-block; padding:2px 6px; border:1px solid #ddd; border-radius:4px; margin:2px; background:#fafafa; font-size:12px; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:10; }
+    .modal-inner { background:#fff; border-radius:6px; padding:16px; max-width:600px; max-height:70vh; overflow:auto; }
+    .modal h3 { margin-top:0; }
+    .close { float:right; cursor:pointer; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<h1>Autodesk Catalog Selection Summary</h1>
+
+<div class="filters" id="filters">
+    <div class="group">
+        <label for="f_user">Username</label>
+        <input id="f_user" type="text" placeholder="john doe"/>
+    </div>
+    <div class="group">
+        <label for="f_versions">Revit Version</label>
+        <select id="f_versions" multiple>
+            <option>2020</option><option>2022</option><option>2023</option><option>2024</option><option>2025</option>
+        </select>
+    </div>
+    <div class="group">
+        <label for="f_units">Units System</label>
+         <select>
+            <option value="all">All</option>
+        </select>
+    </div>
+    <div class="group">
+        <label for="f_categories">Revit Categories</label>
+        <select id="f_categories" multiple>
+            <option value="A C C">A C C</option>
+        <option value="ADSTPR___Content">ADSTPR___Content</option>
+        <option value="ADSTPR___Structural Design">ADSTPR___Structural Design</option>
+        <option value="Annotation Tools">Annotation Tools</option>
+        <option value="Architectural Design">Architectural Design</option>
+        <option value="Autodesk 3ds Max">Autodesk 3ds Max</option>
+        <option value="Autodesk Advance Steel">Autodesk Advance Steel</option>
+        <option value="Autodesk Alias Automotive">Autodesk Alias Automotive</option>
+        <option value="Autodesk Alias Design">Autodesk Alias Design</option>
+        <option value="Autodesk Alias Surface">Autodesk Alias Surface</option>
+        <option value="Autodesk App Store">Autodesk App Store</option>
+        <option value="Autodesk Application Store">Autodesk Application Store</option>
+        <option value="Autodesk Apps">Autodesk Apps</option>
+        <option value="Autodesk AutoCAD">Autodesk AutoCAD</option>
+        <option value="Autodesk AutoCAD Architecture">Autodesk AutoCAD Architecture</option>
+        <option value="Autodesk AutoCAD Electrical">Autodesk AutoCAD Electrical</option>
+        <option value="Autodesk AutoCAD MEP">Autodesk AutoCAD MEP</option>
+        <option value="Autodesk AutoCAD Map 3D">Autodesk AutoCAD Map 3D</option>
+        <option value="Autodesk AutoCAD Mechanical">Autodesk AutoCAD Mechanical</option>
+        <option value="Autodesk AutoCAD Plant 3D">Autodesk AutoCAD Plant 3D</option>
+        <option value="Autodesk Exchange Apps">Autodesk Exchange Apps</option>
+        <option value="Autodesk Fusion">Autodesk Fusion</option>
+        <option value="Autodesk Inventor">Autodesk Inventor</option>
+        <option value="Autodesk Inventor Professional">Autodesk Inventor Professional</option>
+        <option value="Autodesk Maya">Autodesk Maya</option>
+        <option value="Autodesk Revit">Autodesk Revit</option>
+        <option value="Autodesk Simulation CFD">Autodesk Simulation CFD</option>
+        <option value="Autodesk Simulation CFD Advanced">Autodesk Simulation CFD Advanced</option>
+        <option value="Autodesk Simulation CFD Motion">Autodesk Simulation CFD Motion</option>
+        <option value="Autodesk Simulation Mechanical">Autodesk Simulation Mechanical</option>
+        <option value="Autodesk Simulation Moldflow Adviser Premium">Autodesk Simulation Moldflow Adviser Premium</option>
+        <option value="Autodesk Simulation Moldflow Adviser Standard">Autodesk Simulation Moldflow Adviser Standard</option>
+        <option value="Autodesk Simulation Moldflow Adviser Ultimate">Autodesk Simulation Moldflow Adviser Ultimate</option>
+        <option value="Autodesk Simulation Moldflow CAD Doctor">Autodesk Simulation Moldflow CAD Doctor</option>
+        <option value="Autodesk Simulation Moldflow Communicator">Autodesk Simulation Moldflow Communicator</option>
+        <option value="Autodesk Simulation Moldflow Design Link">Autodesk Simulation Moldflow Design Link</option>
+        <option value="Autodesk Simulation Moldflow Insight Premium">Autodesk Simulation Moldflow Insight Premium</option>
+        <option value="Autodesk Simulation Moldflow Insight Standard">Autodesk Simulation Moldflow Insight Standard</option>
+        <option value="Autodesk Simulation Moldflow Insight Ultimate">Autodesk Simulation Moldflow Insight Ultimate</option>
+        <option value="Autodesk Simulation Moldflow Synergy">Autodesk Simulation Moldflow Synergy</option>
+        <option value="Autodesk Simulation Multiphysics">Autodesk Simulation Multiphysics</option>
+        <option value="Autodesk Vault Basic">Autodesk Vault Basic</option>
+        <option value="Autodesk Vault Professional">Autodesk Vault Professional</option>
+        <option value="Autodesk Vault Workgroup">Autodesk Vault Workgroup</option>
+        <option value="Autodesk software">Autodesk software</option>
+        <option value="Autodesk software Scheduling & Productivity">Autodesk software Scheduling & Productivity</option>
+        <option value="Autodesk softwareArchitectural Design">Autodesk softwareArchitectural Design</option>
+        <option value="Building Performance Analysis">Building Performance Analysis</option>
+        <option value="Construction">Construction</option>
+        <option value="Content">Content</option>
+        <option value="Electrical Design">Electrical Design</option>
+        <option value="FORMA">FORMA</option>
+        <option value="Interoperability">Interoperability</option>
+        <option value="Materials">Materials</option>
+        <option value="Mechanical Design">Mechanical Design</option>
+        <option value="NAVIS___Utilities">NAVIS___Utilities</option>
+        <option value="Navisworks Manage">Navisworks Manage</option>
+        <option value="Navisworks Simulate">Navisworks Simulate</option>
+        <option value="Plumbing Design">Plumbing Design</option>
+        <option value="Productivity">Productivity</option>
+        <option value="Read Help Document">Read Help Document</option>
+        <option value="Reality Capture">Reality Capture</option>
+        <option value="Regional-Specific Functionality">Regional-Specific Functionality</option>
+        <option value="Robot Structural Analysis Professional">Robot Structural Analysis Professional</option>
+        <option value="SPCMKR___Generators">SPCMKR___Generators</option>
+        <option value="Scheduling & Productivity">Scheduling & Productivity</option>
+        <option value="Structural Design">Structural Design</option>
+        <option value="Structural Simulation & Analysis">Structural Simulation & Analysis</option>
+        </select>
+    </div>
+    <div class="group">
+        <label for="f_parametric">Parametric</label>
+        <select id="f_units" multiple>
+            <option value="all">All</option>
+        </select>
+    </div>
+    <div class="group">
+        <label for="f_dynamo">Dynamo Build</label>
+        <select>
+            <option value="all">All</option>
+        </select>
+    </div>
+    <div class="group">
+        <label for="f_q">Search by Name/Tags</label>
+        <input id="f_q" type="text" placeholder="keywords…"/>
+    </div>
+    <div class="group">
+        <label for="f_y_n">Y/N (optional)</label>
+        <select id="f_y_n">
+            <option value="">All</option><option value="YES">YES</option><option value="NO">NO</option>
+        </select>
+    </div>
+    <div class="actions">
+        <button class="btn" id="btn_apply">Apply Filters</button>
+        <button class="btn" id="btn_clear">Clear</button>
+        <button class="btn btn-secondary" id="btn_export">Export CSV</button>
+    </div>
+</div>
+
+<table id="grid">
+    <thead>
+        <tr>
+            <th>Item ID</th>
+            <th>Product Name</th>
+            <th>Yes</th>
+            <th>No</th>
+            <th>Yes Users</th>
+            <th>No Users</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td colspan="6" style="text-align:center; padding:20px; color:#666;">Load data with filters above…</td></tr>
+    </tbody>
+</table>
+
+<div class="pagination">
+    <button id="prev">Prev</button>
+    <span id="page_nums"></span>
+    <button id="next">Next</button>
+    <select id="per_page">
+        <option value="25">25 / page</option>
+        <option value="50">50 / page</option>
+        <option value="100">100 / page</option>
+        <option value="200">200 / page</option>
+    </select>
+</div>
+
+<div class="summary" id="summary"></div>
+
+<!-- very light modal -->
+<div class="modal" id="userModal">
+  <div class="modal-inner">
+    <span class="close" id="closeModal">✕</span>
+    <h3 id="modalTitle">Users</h3>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+let page = 1, perPage = 25, totalPages = 1;
+
+function getMultiSelectValues(sel) {
+    return Array.from(sel.selectedOptions).map(o => o.value.trim()).filter(Boolean);
+}
+function buildQuery() {
+    const user = document.getElementById('f_user').value.trim();
+    const versions = getMultiSelectValues(document.getElementById('f_versions'));
+    // const units = getMultiSelectValues(document.getElementById('f_units'));
+    const categories = getMultiSelectValues(document.getElementById('f_categories'));
+    // const parametric = document.getElementById('f_parametric').value;
+    // const dynamo = document.getElementById('f_dynamo').value;
+    const q = document.getElementById('f_q').value.trim();
+    const y_n = document.getElementById('f_y_n').value;
+
+    const params = new URLSearchParams();
+    params.set('page', page);
+    params.set('per_page', perPage);
+    if (user) params.set('U_id', user);
+    if (versions.length) params.set('versions', versions.join(','));
+    // if (units.length) params.set('units', units.join(','));
+    if (categories.length) params.set('categories', categories.join(','));
+    // if (parametric) params.set('parametric', parametric);
+    // if (dynamo) params.set('dynamo', dynamo);
+    if (q) params.set('q', q);
+    if (y_n) params.set('y_n', y_n);
+    return params.toString();
+}
+async function loadData() {
+    const tbody = document.querySelector('#grid tbody');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#666;">Loading…</td></tr>';
+
+    const query = buildQuery();
+    const res = await fetch(`/api/management/summary/autodesk?${query}`);
+    const data = await res.json();
+
+    page = data.page || 1;
+    perPage = data.per_page || perPage;
+    totalPages = data.total_pages || 1;
+    document.getElementById('summary').textContent = `Page ${page} of ${totalPages} — ${data.total || 0} items`;
+
+    tbody.innerHTML = '';
+    if (!data.items || data.items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#666;">No records found for current filters.</td></tr>';
+        renderPagination();
+        return;
+    }
+
+data.items.forEach(row => {
+    const tr = document.createElement('tr');
+
+    // Item ID
+    const tdId = document.createElement('td');
+    tdId.textContent = (row.item_id ?? '');
+    tr.appendChild(tdId);
+
+    // Product Name (+ link)
+    const tdName = document.createElement('td');
+    if (row.product_url) {
+        tdName.innerHTML = `${row.name || ''} &nbsp;<a href="${row.product_url}" target="_blank" rel="noopener noreferrer" class="link">(link)</a>`;
+    } else {
+        tdName.textContent = row.name || '';
+    }
+    tr.appendChild(tdName);
+
+    // Yes / No counts
+    const tdYes = document.createElement('td');
+    tdYes.innerHTML = `<span class="count">${row.yes_count}</span>`;
+    tr.appendChild(tdYes);
+
+    const tdNo = document.createElement('td');
+    tdNo.innerHTML = `<span class="count">${row.no_count}</span>`;
+    tr.appendChild(tdNo);
+
+    // YES Users (modal)
+    const tdYesUsers = document.createElement('td');
+    const btnYes = document.createElement('button');
+    btnYes.className = 'btn';
+    btnYes.textContent = 'Show';
+    btnYes.onclick = () => openUsers('YES Users', row.yes_users);
+    tdYesUsers.appendChild(btnYes);
+    tr.appendChild(tdYesUsers);
+
+    // NO Users (modal)
+    const tdNoUsers = document.createElement('td');
+    const btnNo = document.createElement('button');
+    btnNo.className = 'btn';
+    btnNo.textContent = 'Show';
+    btnNo.onclick = () => openUsers('NO Users', row.no_users);
+    tdNoUsers.appendChild(btnNo);
+    tr.appendChild(tdNoUsers);
+
+    tbody.appendChild(tr);
+});
+
+
+    renderPagination();
+}
+function renderPagination() {
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const nums = document.getElementById('page_nums');
+
+    prev.disabled = page <= 1;
+    next.disabled = page >= totalPages;
+
+    nums.innerHTML = '';
+    const start = Math.max(1, page - 2);
+    const end = Math.min(totalPages, page + 2);
+    for (let i = start; i <= end; i++) {
+        const b = document.createElement('button');
+        b.textContent = i;
+        b.disabled = i === page;
+        b.addEventListener('click', () => { page = i; loadData(); });
+        nums.appendChild(b);
+    }
+}
+function clearFilters() {
+    document.getElementById('f_user').value = '';
+    document.getElementById('f_versions').selectedIndex = -1;
+    document.getElementById('f_units').selectedIndex = -1;
+    document.getElementById('f_categories').selectedIndex = -1;
+    document.getElementById('f_parametric').value = 'all';
+    document.getElementById('f_dynamo').value = 'all';
+    document.getElementById('f_q').value = '';
+    document.getElementById('f_y_n').value = '';
+    page = 1;
+    loadData();
+}
+function exportCsv() {
+    const query = buildQuery();
+    window.open(`/api/management/summary/export/autodesk?${query}`, '_blank');
+}
+
+// simple modal
+function openUsers(title, csv) {
+    const modal = document.getElementById('userModal');
+    document.getElementById('modalTitle').textContent = title;
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '';
+    const list = (csv || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (list.length === 0) {
+        body.textContent = 'No users.';
+    } else {
+        list.forEach(u => {
+            const span = document.createElement('span');
+            span.className = 'tag';
+            span.textContent = u;
+            body.appendChild(span);
+        });
+    }
+    modal.style.display = 'flex';
+}
+document.getElementById('closeModal').onclick = () => document.getElementById('userModal').style.display = 'none';
+document.getElementById('userModal').onclick = (e) => { if (e.target.id === 'userModal') e.currentTarget.style.display = 'none'; };
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn_apply').addEventListener('click', () => { page = 1; loadData(); });
+    document.getElementById('btn_clear').addEventListener('click', clearFilters);
+    document.getElementById('btn_export').addEventListener('click', exportCsv);
+
+    document.getElementById('prev').addEventListener('click', () => { if (page > 1) { page--; loadData(); } });
+    document.getElementById('next').addEventListener('click', () => { if (page < totalPages) { page++; loadData(); } });
+    document.getElementById('per_page').addEventListener('change', (e) => {
+        perPage = parseInt(e.target.value, 10) || 25;
+        page = 1;
+        loadData();
+    });
+
+    loadData();
+});
+</script>
+</body>
+</html>

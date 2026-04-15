@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Autodesk Products Catalog</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .user-section {
+            background-color: white; padding: 20px; margin-bottom: 20px; border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto 20px;
+        }
+        .user-section label { display: block; margin-bottom: 8px; font-weight: bold; }
+        .user-section input {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;
+        }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .filter-section {
+            background-color: white; padding: 20px; margin-bottom: 20px; border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;
+        }
+        .filter-group { margin-bottom: 0; }
+        .filter-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        select, input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        select[multiple] { height: auto; min-height: 120px; }
+        table {
+            width: 100%; border-collapse: collapse; background-color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; position: sticky; top: 0; font-size: 14px; }
+        tr:hover { background-color: #f9f9f9; }
+        .product-image { max-width: 100px; max-height: 100px; cursor: pointer; }
+        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .modal-content { display: flex; justify-content: center; align-items: center; height: 100%; }
+        .modal-image { max-width: 90%; max-height: 90%; }
+        .close { position: absolute; top: 15px; right: 35px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
+        .product-link { color: #0066cc; text-decoration: none; }
+        .product-link:hover { text-decoration: underline; }
+        .filter-results { margin-bottom: 15px; font-style: italic; color: #666; }
+        .clear-filters {
+            background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;
+            font-size: 14px; align-self: end; grid-column: span 2; margin-top: 10px;
+        }
+        .clear-filters:hover { background-color: #d32f2f; }
+        .no-results { text-align: center; padding: 20px; font-style: italic; color: #666; }
+        .radio-group { display: flex; gap: 10px; }
+        .radio-option { display: flex; align-items: center; gap: 5px; }
+        .submit-button { background-color: #4CAF50; color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-size: 16px; display: block; margin-left: auto; margin-bottom: 30px; }
+        .submit-button:hover { background-color: #45a049; }
+        .loading { text-align: center; padding: 20px; font-style: italic; color: #666; }
+        .review-section { display: none; background-color: white; padding: 20px; margin-bottom: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .review-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .review-table th, .review-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        .review-table th { background-color: #f2f2f2; }
+        .review-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+        .back-button { background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .confirm-button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .confirmation-message { display: none; text-align: center; padding: 20px; background-color: #dff0d8; color: #3c763d; border-radius: 4px; margin-bottom: 20px; }
+
+        /* Previous submissions panel */
+        .previous-submissions {
+            display: none;
+            background-color: white; padding: 20px; margin: 0 auto 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 100%;
+        }
+        .previous-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+        .secondary-button {
+            background-color: #1976d2; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;
+        }
+        .secondary-button:hover { background-color: #1565c0; }
+
+        /* Header logo */
+        .header-logo { position: absolute; left: 20px; top: 10px; width: 100px; height: 100px; }
+        .header-logo img { width: 100%; height: 100%; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <div class="header-logo">
+        <img src="{{ url_for('static', filename='A.jpg') }}" alt="Archcorp Logo" style="padding-left:7%;">
+    </div>
+
+    <div class="user-section">
+        <label for="U_id">Your Name:</label>
+        <input type="text" id="U_id" placeholder="Enter your Name" required>
+    </div>
+    <div style="text-align: right; font-size: 1.2rem;">
+    <button type="button" 
+            class="btn btn-success position-fixed end-0 me-3 mt-3" 
+            id="offerTrackingBtn" 
+            onclick="gohome()" 
+            aria-label="View Autodesk Addins and Plugins" 
+            style="font-size: 1.2rem; background-color: #0d6be6; color: white;padding: 10px 20px; border-radius: 4px; cursor: pointer;
+            font-size: 14px; align-self: end; grid-column: span 2; margin-top: 10px;">
+        <i class="bi bi-list-check"></i> Revit 3D Products
+    </button>
+
+    <button type="button" 
+            class="btn btn-success position-fixed end-0 me-3 mt-3" 
+            id="offerTrackingBtn" 
+            onclick="go_dashboard_autodesk()" 
+            aria-label="View Autodesk Addins and Plugins" 
+            style="font-size: 1.2rem; background-color: #e6810d; color: white;padding: 10px 20px; border-radius: 4px; cursor: pointer;
+            font-size: 14px; grid-column: span 2; margin-top: 10px;">
+        <i class="bi bi-list-check"></i> Autodesk Plugins Selections Dashboard
+    </button>
+</div>
+    <!-- Previous submissions block -->
+    <div id="previous-submissions" class="previous-submissions">
+        <h2>Your Previous Submissions</h2>
+        <table id="previous-table">
+            <thead>
+                <tr>
+                    <th>Item ID</th>
+                    <th>Product Name</th>
+                    <th>Your Selection (Y/N)</th>
+                    <th>Product URL</th>
+                </tr>
+            </thead>
+            <tbody id="previous-body">
+                <tr><td colspan="4" class="loading">Loading...</td></tr>
+            </tbody>
+        </table>
+        <div class="previous-actions">
+            <button id="apply-previous" class="secondary-button">Apply to Table</button>
+            <button id="refresh-previous" class="secondary-button">Refresh</button>
+        </div>
+    </div>
+
+    <h1>Revit Products Catalog</h1>
+
+    <div class="filter-section" id="filter-section">
+        <div class="filter-group">
+            <label for="version-filter">Revit Version</label>
+            <select id="version-filter" multiple>
+                <option value="2020">2020</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="units-filter">Units System</label>
+            <select id="units-filter" multiple>
+          
+            </select>
+        </div>
+
+        <div class="filter-group">
+    <label for="category-filter">Revit Categories</label>
+    <select id="category-filter" multiple>
+        <option value="A C C">A C C</option>
+        <option value="ADSTPR___Content">ADSTPR___Content</option>
+        <option value="ADSTPR___Structural Design">ADSTPR___Structural Design</option>
+        <option value="Annotation Tools">Annotation Tools</option>
+        <option value="Architectural Design">Architectural Design</option>
+        <option value="Autodesk 3ds Max">Autodesk 3ds Max</option>
+        <option value="Autodesk Advance Steel">Autodesk Advance Steel</option>
+        <option value="Autodesk Alias Automotive">Autodesk Alias Automotive</option>
+        <option value="Autodesk Alias Design">Autodesk Alias Design</option>
+        <option value="Autodesk Alias Surface">Autodesk Alias Surface</option>
+        <option value="Autodesk App Store">Autodesk App Store</option>
+        <option value="Autodesk Application Store">Autodesk Application Store</option>
+        <option value="Autodesk Apps">Autodesk Apps</option>
+        <option value="Autodesk AutoCAD">Autodesk AutoCAD</option>
+        <option value="Autodesk AutoCAD Architecture">Autodesk AutoCAD Architecture</option>
+        <option value="Autodesk AutoCAD Electrical">Autodesk AutoCAD Electrical</option>
+        <option value="Autodesk AutoCAD MEP">Autodesk AutoCAD MEP</option>
+        <option value="Autodesk AutoCAD Map 3D">Autodesk AutoCAD Map 3D</option>
+        <option value="Autodesk AutoCAD Mechanical">Autodesk AutoCAD Mechanical</option>
+        <option value="Autodesk AutoCAD Plant 3D">Autodesk AutoCAD Plant 3D</option>
+        <option value="Autodesk Exchange Apps">Autodesk Exchange Apps</option>
+        <option value="Autodesk Fusion">Autodesk Fusion</option>
+        <option value="Autodesk Inventor">Autodesk Inventor</option>
+        <option value="Autodesk Inventor Professional">Autodesk Inventor Professional</option>
+        <option value="Autodesk Maya">Autodesk Maya</option>
+        <option value="Autodesk Revit">Autodesk Revit</option>
+        <option value="Autodesk Simulation CFD">Autodesk Simulation CFD</option>
+        <option value="Autodesk Simulation CFD Advanced">Autodesk Simulation CFD Advanced</option>
+        <option value="Autodesk Simulation CFD Motion">Autodesk Simulation CFD Motion</option>
+        <option value="Autodesk Simulation Mechanical">Autodesk Simulation Mechanical</option>
+        <option value="Autodesk Simulation Moldflow Adviser Premium">Autodesk Simulation Moldflow Adviser Premium</option>
+        <option value="Autodesk Simulation Moldflow Adviser Standard">Autodesk Simulation Moldflow Adviser Standard</option>
+        <option value="Autodesk Simulation Moldflow Adviser Ultimate">Autodesk Simulation Moldflow Adviser Ultimate</option>
+        <option value="Autodesk Simulation Moldflow CAD Doctor">Autodesk Simulation Moldflow CAD Doctor</option>
+        <option value="Autodesk Simulation Moldflow Communicator">Autodesk Simulation Moldflow Communicator</option>
+        <option value="Autodesk Simulation Moldflow Design Link">Autodesk Simulation Moldflow Design Link</option>
+        <option value="Autodesk Simulation Moldflow Insight Premium">Autodesk Simulation Moldflow Insight Premium</option>
+        <option value="Autodesk Simulation Moldflow Insight Standard">Autodesk Simulation Moldflow Insight Standard</option>
+        <option value="Autodesk Simulation Moldflow Insight Ultimate">Autodesk Simulation Moldflow Insight Ultimate</option>
+        <option value="Autodesk Simulation Moldflow Synergy">Autodesk Simulation Moldflow Synergy</option>
+        <option value="Autodesk Simulation Multiphysics">Autodesk Simulation Multiphysics</option>
+        <option value="Autodesk Vault Basic">Autodesk Vault Basic</option>
+        <option value="Autodesk Vault Professional">Autodesk Vault Professional</option>
+        <option value="Autodesk Vault Workgroup">Autodesk Vault Workgroup</option>
+        <option value="Autodesk software">Autodesk software</option>
+        <option value="Autodesk software Scheduling & Productivity">Autodesk software Scheduling & Productivity</option>
+        <option value="Autodesk softwareArchitectural Design">Autodesk softwareArchitectural Design</option>
+        <option value="Building Performance Analysis">Building Performance Analysis</option>
+        <option value="Construction">Construction</option>
+        <option value="Content">Content</option>
+        <option value="Electrical Design">Electrical Design</option>
+        <option value="FORMA">FORMA</option>
+        <option value="Interoperability">Interoperability</option>
+        <option value="Materials">Materials</option>
+        <option value="Mechanical Design">Mechanical Design</option>
+        <option value="NAVIS___Utilities">NAVIS___Utilities</option>
+        <option value="Navisworks Manage">Navisworks Manage</option>
+        <option value="Navisworks Simulate">Navisworks Simulate</option>
+        <option value="Plumbing Design">Plumbing Design</option>
+        <option value="Productivity">Productivity</option>
+        <option value="Read Help Document">Read Help Document</option>
+        <option value="Reality Capture">Reality Capture</option>
+        <option value="Regional-Specific Functionality">Regional-Specific Functionality</option>
+        <option value="Robot Structural Analysis Professional">Robot Structural Analysis Professional</option>
+        <option value="SPCMKR___Generators">SPCMKR___Generators</option>
+        <option value="Scheduling & Productivity">Scheduling & Productivity</option>
+        <option value="Structural Design">Structural Design</option>
+        <option value="Structural Simulation & Analysis">Structural Simulation & Analysis</option>
+    </select>
+</div>
+
+
+        <div class="filter-group">
+            <label for="parametric-filter">Parametric</label>
+            <select id="parametric-filter">
+                <option value="all">All</option>
+                
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="dynamo-filter">Dynamo Build</label>
+            <select id="dynamo-filter">
+                <option value="all">All</option>
+               
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="search-filter">Search by Name/Tags</label>
+            <input type="text" id="search-filter" placeholder="Enter keywords...">
+        </div>
+
+        <button id="clear-filters" class="clear-filters">Clear All Filters</button>
+    </div>
+
+    <div class="filter-results" id="filter-results"></div>
+
+    <table id="products-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Product URL</th>
+                <th>Image</th>
+                <th>Select</th>
+            </tr>
+        </thead>
+        <tbody id="products-body">
+            <tr><td colspan="4" class="loading">Loading products...</td></tr>
+        </tbody>
+    </table>
+
+    <div class="action-buttons">
+        <button id="review-button" class="submit-button">Review Selection</button>
+        <button id="submit-button" class="submit-button">Submit Selected Products</button>
+    </div>
+
+    <div id="review-section" class="review-section">
+        <h2>Review Your Selection</h2>
+        <table class="review-table">
+            <thead><tr><th>Product Name</th><th>Your Selection</th></tr></thead>
+            <tbody id="review-body"></tbody>
+        </table>
+        <div class="review-buttons">
+            <button id="back-button" class="back-button">Back to Edit</button>
+            <button id="confirm-button" class="confirm-button">Confirm and Submit</button>
+        </div>
+    </div>
+
+    <div id="confirmation-message" class="confirmation-message">
+        Your selections have been successfully submitted!
+    </div>
+
+    <div id="image-modal" class="modal">
+        <span class="close">&times;</span>
+        <div class="modal-content">
+            <img id="modal-image" class="modal-image" alt="Product image">
+        </div>
+    </div>
+
+    <script>
+        // --- Global state (no pagination) ---
+        let allProducts = [];
+        let previousSelections = []; // [{item_id, Y_N, name, product_url}]
+
+        // Helpers to read multi-selects
+        function getMultiValuesById(id) {
+            const sel = document.getElementById(id);
+            return Array.from(sel.selectedOptions).map(o => o.value.trim()).filter(Boolean);
+        }
+
+        // Build query string for /api/revititems (server-side filtering)
+        function buildCatalogQuery() {
+            const versions   = getMultiValuesById('version-filter');
+            const units      = getMultiValuesById('units-filter');
+            const categories = getMultiValuesById('category-filter');
+            const parametric = document.getElementById('parametric-filter').value;
+            const dynamo     = document.getElementById('dynamo-filter').value;
+            const q          = document.getElementById('search-filter').value.trim();
+
+            const params = new URLSearchParams();
+            if (versions.length)   params.set('versions', versions.join(','));
+            if (units.length)      params.set('units', units.join(','));
+            if (categories.length) params.set('categories', categories.join(','));
+            if (parametric)        params.set('parametric', parametric);
+            if (dynamo)            params.set('dynamo', dynamo);
+            if (q)                 params.set('q', q);
+            return params.toString();
+        }
+
+        // Fetch all products for current filters (no pagination)
+        async function fetchProducts() {
+            try {
+                const query = buildCatalogQuery();
+                const url = query ? `/api/revititems/autodesk?${query}` : `/api/revititems/autodesk`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+
+                const processedItems = (data.items || []).map(p => {
+    let images = [];
+
+    if (Array.isArray(p.image_urls)) {
+        images = p.image_urls;
+    } else if (typeof p.image_urls === 'string') {
+        if (p.image_urls.includes('|')) {
+            images = p.image_urls.split('|').map(u => u.trim()).filter(Boolean);
+        } else if (p.image_urls.trim().startsWith('http')) {
+            images = [p.image_urls.trim()];
+        }
+    }
+
+    return {
+        ...p,
+        image_urls: images
+    };
+});
+
+                return { items: processedItems, total: data.total || processedItems.length };
+            } catch (e) {
+                console.error('Error fetching products:', e);
+                return { items: [], total: 0, error: e.message };
+            }
+        }
+
+        // Render products (no pagination)
+        async function renderTable() {
+            const tableBody = document.getElementById('products-body');
+            tableBody.innerHTML = '<tr><td colspan="4" class="loading">Loading products...</td></tr>';
+
+            const data = await fetchProducts();
+            if (data.error) {
+                tableBody.innerHTML = `<tr><td colspan="4">Error loading products: ${data.error}</td></tr>`;
+                return;
+            }
+
+            allProducts = data.items;
+            document.getElementById('filter-results').textContent = `${data.total} item(s) found`;
+
+            tableBody.innerHTML = '';
+            if (allProducts.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="no-results">No products found</td></tr>';
+                return;
+            }
+
+            allProducts.forEach(product => {
+                const row = document.createElement('tr');
+
+                // Name
+                const nameCell = document.createElement('td');
+                nameCell.textContent = product.name || '';
+                row.appendChild(nameCell);
+
+                // Product URL
+                const urlCell = document.createElement('td');
+                if (product.product_url) {
+                    const link = document.createElement('a');
+                    link.href = product.product_url;
+                    link.textContent = 'View Product';
+                    link.className = 'product-link';
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    urlCell.appendChild(link);
+                }
+                row.appendChild(urlCell);
+
+                // Image
+                const imageCell = document.createElement('td');
+                if (product.image_urls && product.image_urls.length > 0) {
+                    const img = document.createElement('img');
+                    img.src = product.image_urls[0];
+                    img.alt = product.name || 'Image';
+                    img.className = 'product-image';
+                    img.onclick = () => openModal(product.image_urls);
+                    imageCell.appendChild(img);
+                }
+                row.appendChild(imageCell);
+
+                // Select radios (blank by default)
+                const selectCell = document.createElement('td');
+                const radioGroup = document.createElement('div'); radioGroup.className = 'radio-group';
+
+                const yesOption = document.createElement('div'); yesOption.className = 'radio-option';
+                const yesRadio = document.createElement('input');
+                yesRadio.type = 'radio';
+                yesRadio.name = `select-${product.item_id}`;
+                yesRadio.value = 'YES'; // uppercase for DB
+                yesRadio.id = `yes-${product.item_id}`;
+                const yesLabel = document.createElement('label');
+                yesLabel.htmlFor = yesRadio.id; yesLabel.textContent = 'Yes';
+                yesOption.appendChild(yesRadio); yesOption.appendChild(yesLabel);
+
+                const noOption = document.createElement('div'); noOption.className = 'radio-option';
+                const noRadio = document.createElement('input');
+                noRadio.type = 'radio';
+                noRadio.name = `select-${product.item_id}`;
+                noRadio.value = 'NO'; // uppercase for DB
+                noRadio.id = `no-${product.item_id}`;
+                noRadio.checked = true;
+                const noLabel = document.createElement('label');
+                noLabel.htmlFor = noRadio.id; noLabel.textContent = 'No';
+                noOption.appendChild(noRadio); noOption.appendChild(noLabel);
+
+                radioGroup.appendChild(yesOption);
+                radioGroup.appendChild(noOption);
+                selectCell.appendChild(radioGroup);
+                row.appendChild(selectCell);
+
+                tableBody.appendChild(row);
+            });
+
+            // Show action buttons
+            document.getElementById('review-button').style.display = 'inline-block';
+            document.getElementById('submit-button').style.display = 'inline-block';
+        }
+
+        // Previous submissions
+        async function loadPreviousSubmissions() {
+            const userId = document.getElementById('U_id').value.trim();
+            const block = document.getElementById('previous-submissions');
+            const body = document.getElementById('previous-body');
+
+            if (!userId) {
+                block.style.display = 'none';
+                previousSelections = [];
+                return;
+            }
+
+            body.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+            block.style.display = 'block';
+
+            try {
+                const res = await fetch(`/api/user-selections/autodesk?U_id=${encodeURIComponent(userId)}`);
+                const data = await res.json();
+                previousSelections = data.items || [];
+
+                if (previousSelections.length === 0) {
+                    body.innerHTML = '<tr><td colspan="4" class="no-results">No previous submissions found for this user.</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = '';
+                previousSelections.forEach(item => {
+                    const tr = document.createElement('tr');
+
+                    const tdId = document.createElement('td');
+                    tdId.textContent = item.item_id;
+                    tr.appendChild(tdId);
+
+                    const tdName = document.createElement('td');
+                    tdName.textContent = item.name || '';
+                    tr.appendChild(tdName);
+
+                    const tdYN = document.createElement('td');
+                    tdYN.textContent = (item.Y_N || '').toUpperCase();
+                    tr.appendChild(tdYN);
+
+                    const tdUrl = document.createElement('td');
+                    if (item.product_url) {
+                        const a = document.createElement('a');
+                        a.href = item.product_url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+                        a.className = 'product-link'; a.textContent = 'View Product';
+                        tdUrl.appendChild(a);
+                    }
+                    tr.appendChild(tdUrl);
+
+                    body.appendChild(tr);
+                });
+            } catch (e) {
+                console.error('Failed to load previous submissions:', e);
+                body.innerHTML = '<tr><td colspan="4">Error loading previous submissions.</td></tr>';
+            }
+        }
+
+        function applyPreviousToTable() {
+            if (!previousSelections || previousSelections.length === 0) return;
+
+            previousSelections.forEach(sel => {
+                const yesRadio = document.getElementById(`yes-${sel.item_id}`);
+                const noRadio  = document.getElementById(`no-${sel.item_id}`);
+                if (sel.Y_N && sel.Y_N.toUpperCase() === 'YES' && yesRadio) yesRadio.checked = true;
+                else if (sel.Y_N && sel.Y_N.toUpperCase() === 'NO' && noRadio) noRadio.checked = true;
+            });
+        }
+
+        // Review + submission helpers
+      function getSelectedProducts() {
+    const selected = [];
+
+    document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+        // Derive the id from "select-<id>"
+        const productId = parseInt(radio.name.replace('select-', ''), 10);
+        if (!Number.isInteger(productId) || productId <= 0) {
+            console.warn('Skipping invalid productId from radio:', radio.name);
+            return; // skip invalid ids so we never send null/NaN
+        }
+
+        // Find product to get its name (optional; safe if not found)
+        const product = allProducts.find(p => Number(p.item_id) === productId);
+
+        selected.push({
+            item_id: productId,                       // guaranteed integer
+            name: (product && product.name) || '',    // keep UI-friendly name
+            Y_N: (radio.value || '').toUpperCase()    // "YES" or "NO"
+        });
+    });
+
+    return selected;
+}
+
+
+        function showReviewSection() {
+            const userId = document.getElementById('U_id').value.trim();
+            if (!userId) { alert('Please enter your User ID before reviewing'); return; }
+
+            const selectedProducts = getSelectedProducts();
+            if (selectedProducts.length === 0) {
+                alert('Please select at least one product (Yes or No)');
+                return;
+            }
+
+            const reviewBody = document.getElementById('review-body');
+            reviewBody.innerHTML = '';
+            selectedProducts.forEach(p => {
+                const row = document.createElement('tr');
+                const nameCell = document.createElement('td'); nameCell.textContent = p.name;
+                const selectionCell = document.createElement('td'); selectionCell.textContent = p.Y_N;
+                row.appendChild(nameCell); row.appendChild(selectionCell);
+                reviewBody.appendChild(row);
+            });
+
+            // Toggle sections
+            document.getElementById('products-table').style.display = 'none';
+            document.getElementById('filter-section').style.display = 'grid';
+            document.getElementById('filter-results').style.display = 'none';
+            document.getElementById('submit-button').style.display = 'none';
+            document.getElementById('review-button').style.display = 'none';
+            document.getElementById('review-section').style.display = 'block';
+        }
+
+        function backToEdit() {
+            document.getElementById('products-table').style.display = 'table';
+            document.getElementById('filter-section').style.display = 'grid';
+            document.getElementById('filter-results').style.display = 'block';
+            document.getElementById('submit-button').style.display = 'block';
+            document.getElementById('review-button').style.display = 'block';
+            document.getElementById('review-section').style.display = 'none';
+        }
+
+        async function confirmAndSubmit() {
+            const userId = document.getElementById('U_id').value.trim();
+            const selectedProducts = getSelectedProducts();
+
+            if (!userId) { alert('Please enter your User ID before submitting'); return; }
+            if (selectedProducts.length === 0) { alert('Please select at least one product'); return; }
+
+            const submissionData = { U_id: userId, selections: selectedProducts };
+
+            try {
+                const res = await fetch('/api/submit-selections/autodesk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(submissionData)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    document.getElementById('review-section').style.display = 'none';
+                    const msg = document.getElementById('confirmation-message');
+                    msg.style.display = 'block';
+                    msg.textContent = result.message || 'Submitted successfully!';
+
+                    setTimeout(() => {
+                        msg.style.display = 'none';
+                        backToEdit();
+                        // Clear current selections
+                        document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+                        // Refresh previous submissions
+                        loadPreviousSubmissions();
+                    }, 3000);
+                } else {
+                    alert(`Submission failed: ${result.error || 'Unknown error'}`);
+                }
+            } catch (err) {
+                console.error('Error submitting selections:', err);
+                alert('Error submitting your selections. Please check console for details.');
+            }
+        }
+
+        // Image modal
+        function openModal(imageUrls) {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-image');
+            const closeBtn = document.getElementsByClassName('close')[0];
+
+            modalImg.src = imageUrls[0];
+            modal.style.display = 'block';
+
+            closeBtn.onclick = function () { modal.style.display = 'none'; };
+            window.onclick = function (event) { if (event.target == modal) { modal.style.display = 'none'; } };
+        }
+
+        // Bindings / init
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Review + submit
+            document.getElementById('review-button').addEventListener('click', showReviewSection);
+            document.getElementById('back-button').addEventListener('click', backToEdit);
+            document.getElementById('confirm-button').addEventListener('click', confirmAndSubmit);
+
+            // Filters: re-render table whenever they change
+            document.getElementById('version-filter').addEventListener('change', renderTable);
+            document.getElementById('units-filter').addEventListener('change', renderTable);
+            document.getElementById('category-filter').addEventListener('change', renderTable);
+            document.getElementById('parametric-filter').addEventListener('change', renderTable);
+            document.getElementById('dynamo-filter').addEventListener('change', renderTable);
+            document.getElementById('search-filter').addEventListener('input', () => {
+                // small debounce could be added; immediate for now
+                renderTable();
+            });
+            document.getElementById('clear-filters').addEventListener('click', () => {
+                document.getElementById('version-filter').selectedIndex = -1;
+                document.getElementById('units-filter').selectedIndex = -1;
+                document.getElementById('category-filter').selectedIndex = -1;
+                document.getElementById('parametric-filter').value = 'all';
+                document.getElementById('dynamo-filter').value = 'all';
+                document.getElementById('search-filter').value = '';
+                renderTable();
+            });
+
+            // Previous submissions
+            const uidInput = document.getElementById('U_id');
+            uidInput.addEventListener('change', loadPreviousSubmissions);
+            uidInput.addEventListener('blur', loadPreviousSubmissions);
+            document.getElementById('refresh-previous').addEventListener('click', loadPreviousSubmissions);
+            document.getElementById('apply-previous').addEventListener('click', applyPreviousToTable);
+
+            // Initial table load
+            await renderTable();
+        });
+        function gohome() {
+   
+    // Use Flask's url_for style path (relative to your application root)
+    window.location.href = "/";} 
+    function go_dashboard_autodesk() {
+   
+    // Use Flask's url_for style path (relative to your application root)
+    window.location.href = "/autodesk/dashboard/summary";} 
+    </script>
+    </script>
+</body>
+</html>
